@@ -39,13 +39,13 @@ class QAgent:
     def observe(self, state, action, next_state, reward, done):
         self.num_observations += 1
 
-        target_qs = self.model.predict(state)
-        next_qs = self.model.predict(next_state)
+        target_qs = self.model.predict(state).flatten()
+        next_qs = self.model.predict(next_state).flatten()
         if done:
             q_update = reward
         else:
             q_update = reward + self.gamma * np.amax(next_qs)
-        target_qs[0, np.argmax(next_qs)] = q_update
+        target_qs[action] = q_update
         
         self.memory.add(state, target_qs)
 
@@ -90,7 +90,7 @@ class ProbAgent:
         else:
             q_update = reward + self.gamma * np.amax(next_qs)
         
-        target_qs[np.argmax(next_qs)] = q_update
+        target_qs[action] = q_update
         self.memory.add(state, target_qs)
 
     def train(self):

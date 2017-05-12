@@ -27,8 +27,12 @@ class QAgent:
         self.model.init(n_obs, n_act)
 
     def act(self, state):
-        self.epsilon = np.maximum(self.epsilon_end, 
-                        self.epsilon_start * (1 - (self.num_observations / self.epsilon_decay)))
+        if self.num_observations < self.obs_to_start_training:
+            self.epsilon = 1.0
+        else:
+            decay_factor = (self.num_observations - self.obs_to_start_training) / self.epsilon_decay
+            decay_amount = (self.epsilon_end - self.epsilon_start) * decay_factor
+            self.epsilon = np.maximum(self.epsilon_end, self.epsilon_start + decay_amount)
         
         if np.random.rand(1) > self.epsilon:
             action = np.argmax(self.model.predict(state))
@@ -43,7 +47,7 @@ class QAgent:
         self.memory.add(state.ravel(), action, next_state.ravel(), reward, done)
 
     def train(self):
-        if self.memory.get_size() > self.obs_to_start_training:
+        if self.memory.get_size() >= self.obs_to_start_training:
             states, actions, next_states, rewards, done = self.memory.sample(self.batch_size)
             
             target_qs = self.model.predict(states)
